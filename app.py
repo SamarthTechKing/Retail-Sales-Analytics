@@ -4,14 +4,9 @@ import pandas as pd
 import streamlit as st
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parent
 
-DATA_PATH = (
-    PROJECT_ROOT
-    / "data"
-    / "processed"
-    / "retail_sales_clean.csv"
-)
+DATA_PATH = PROJECT_ROOT / "retail_sales_clean.csv"
 
 
 st.set_page_config(
