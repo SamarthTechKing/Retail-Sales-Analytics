@@ -507,4 +507,4 @@ with tab_data:
 
     summary_cols = st.columns(3)
     summary_cols[0].metric("Filtered records", f"{len(filtered):,}")
-    summary_cols[1].metric("Uni
+    summary_cols[1].metric("Unique customers", f"{customers:,}")
