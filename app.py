@@ -100,9 +100,11 @@ st.markdown(
     .small-note { color: #64748B; font-size: 12px; }
     div[data-testid="stPlotlyChart"] {
         background: #FFFFFF; border: 1px solid #E7ECF3;
-        border-radius: 15px; padding: 7px;
+        border-radius: 15px; padding: 10px 8px 6px 8px;
         box-shadow: 0 4px 14px rgba(20,33,61,.035);
+        min-width: 0; overflow: hidden;
     }
+    [data-testid="column"] { min-width: 0; }
     div[data-testid="stDataFrame"] {
         border: 1px solid #E7ECF3; border-radius: 12px; overflow: hidden;
     }
@@ -223,15 +225,15 @@ if filtered.empty:
 def polish(fig, height=330):
     fig.update_layout(
         height=height,
-        margin=dict(l=12, r=12, t=28, b=12),
+        margin=dict(l=72, r=34, t=42, b=54, autoexpand=True),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="#FFFFFF",
-        font=dict(family="DM Sans, sans-serif", color="#475569", size=11),
-        title=dict(font=dict(family="Manrope, sans-serif", size=15, color=NAVY)),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        font=dict(family="DM Sans, sans-serif", color="#475569", size=10),
+        title=dict(font=dict(family="Manrope, sans-serif", size=14, color=NAVY), x=0.02, xanchor="left"),
+        legend=dict(orientation="h", yanchor="top", y=-0.22, xanchor="left", x=0),
         hoverlabel=dict(bgcolor=NAVY, font_size=12, font_family="DM Sans"),
-        xaxis=dict(showgrid=False, linecolor="#E8EDF4", tickfont=dict(color=MUTED)),
-        yaxis=dict(showgrid=True, gridcolor="#EEF2F7", zeroline=False, tickfont=dict(color=MUTED)),
+        xaxis=dict(showgrid=False, linecolor="#E8EDF4", tickfont=dict(color=MUTED, size=10), automargin=True),
+        yaxis=dict(showgrid=True, gridcolor="#EEF2F7", zeroline=False, tickfont=dict(color=MUTED, size=10), automargin=True),
     )
     return fig
 
@@ -320,8 +322,11 @@ with tab_overview:
             title="Revenue by country", text="net_sales",
             color="net_sales", color_continuous_scale=["#BFD7F7", BLUE],
         )
-        fig.update_traces(texttemplate="$%{text:,.0f}", textposition="outside", cliponaxis=False)
-        fig.update_xaxes(title="", showticklabels=False, showgrid=False)
+        fig.update_traces(
+            texttemplate="",
+            hovertemplate="<b>%{y}</b><br>Revenue: $%{x:,.0f}<extra></extra>",
+        )
+        fig.update_xaxes(title="Revenue ($)", tickprefix="$", tickformat="~s", showgrid=True)
         fig.update_yaxes(title="")
         fig.update_layout(coloraxis_showscale=False)
         st.plotly_chart(polish(fig, 360), use_container_width=True)
@@ -334,10 +339,20 @@ with tab_overview:
         )
         fig = px.pie(
             category, names="category", values="net_sales",
-            title="Revenue mix by category", hole=0.62,
+            title="Revenue mix by category", hole=0.66,
             color_discrete_sequence=PALETTE,
         )
-        fig.update_traces(textposition="outside", textinfo="percent+label", hole=0.62)
+        fig.update_traces(
+            textposition="inside",
+            textinfo="percent",
+            textfont=dict(size=10, color="white"),
+            hovertemplate="<b>%{label}</b><br>Revenue: $%{value:,.0f}<br>Share: %{percent}<extra></extra>",
+            sort=True,
+        )
+        fig.update_layout(
+            legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.02),
+            margin=dict(l=12, r=120, t=42, b=18),
+        )
         st.plotly_chart(polish(fig, 340), use_container_width=True)
     with c4:
         channel = (
@@ -378,8 +393,11 @@ with tab_products:
             color="revenue", color_continuous_scale=["#BFD7F7", BLUE],
             hover_data={"units": True, "orders": True},
         )
-        fig.update_xaxes(title="Revenue ($)", tickprefix="$", tickformat=",.0f")
-        fig.update_yaxes(title="")
+        fig.update_traces(
+            hovertemplate="<b>%{y}</b><br>Revenue: $%{x:,.0f}<extra></extra>"
+        )
+        fig.update_xaxes(title="Revenue ($)", tickprefix="$", tickformat="~s")
+        fig.update_yaxes(title="", automargin=True)
         fig.update_layout(coloraxis_showscale=False)
         st.plotly_chart(polish(fig, 480), use_container_width=True)
     with right:
@@ -391,6 +409,9 @@ with tab_products:
         fig.update_xaxes(title="Units sold")
         fig.update_yaxes(title="Revenue ($)", tickprefix="$")
         fig.update_layout(showlegend=False)
+        fig.update_traces(
+            hovertemplate="<b>%{hovertext}</b><br>Units: %{x:,.0f}<br>Revenue: $%{y:,.0f}<extra></extra>"
+        )
         st.plotly_chart(polish(fig, 480), use_container_width=True)
 
     st.markdown("#### Product performance table")
@@ -452,9 +473,7 @@ with tab_customers:
         fig = px.bar(
             ratings, x="rating", y="records", title="Customer rating distribution",
             color="records", color_continuous_scale=["#FDE7B2", AMBER],
-            text="records",
         )
-        fig.update_traces(textposition="outside")
         fig.update_xaxes(title="Rating")
         fig.update_yaxes(title="Number of records")
         fig.update_layout(coloraxis_showscale=False)
@@ -467,8 +486,10 @@ with tab_customers:
         color="return_rate", color_continuous_scale=["#F9D6D6", RED],
         hover_data={"records": True},
     )
-    fig.update_traces(texttemplate="%{x:.1f}%", textposition="outside")
-    fig.update_xaxes(title="Return rate (%)", ticksuffix="%", range=[0, max(5, cat_returns["return_rate"].max() * 1.2)])
+    fig.update_traces(
+        hovertemplate="<b>%{y}</b><br>Return rate: %{x:.1f}%<extra></extra>"
+    )
+    fig.update_xaxes(title="Return rate (%)", ticksuffix="%", range=[0, max(5, cat_returns["return_rate"].max() * 1.15)])
     fig.update_yaxes(title="")
     fig.update_layout(coloraxis_showscale=False)
     st.plotly_chart(polish(fig, 330), use_container_width=True)
@@ -486,27 +507,4 @@ with tab_data:
 
     summary_cols = st.columns(3)
     summary_cols[0].metric("Filtered records", f"{len(filtered):,}")
-    summary_cols[1].metric("Unique customers", f"{customers:,}")
-    summary_cols[2].metric("Average customer rating",
-                           f"{filtered['customer_rating'].mean():.2f}" if filtered["customer_rating"].notna().any() else "N/A")
-
-    st.dataframe(
-        filtered.sort_values("order_date", ascending=False),
-        use_container_width=True,
-        hide_index=True,
-    )
-    csv_bytes = filtered.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        "⬇ Download filtered records (CSV)",
-        data=csv_bytes,
-        file_name="retail_sales_filtered.csv",
-        mime="text/csv",
-        use_container_width=False,
-    )
-
-st.markdown("---")
-st.markdown(
-    '<div class="small-note">Retail Intelligence Dashboard • Interactive analysis based on the selected dataset. '
-    'All metrics respond to the sidebar filters.</div>',
-    unsafe_allow_html=True,
-)
+    summary_cols[1].metric("Uni
